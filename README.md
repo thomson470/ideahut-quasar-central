@@ -43,3 +43,6 @@ DEVELOPMENT=false
 
 ### Customize the configuration
 See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-webpack/quasar-config-js).
+
+### Backend
+See [ideahut-springboot-central](https://github.com/thomson470/ideahut-springboot-central)
