@@ -57,7 +57,7 @@
             >
                 <template v-slot:top>
                     <q-btn
-                        v-if="util.isObject(definition.table) && 'multiple' === definition.table.selection && fxGrid.permission.isDeletes(permission) && !onlyView"
+                        v-if="util.isObject(definition.table) && 'multiple' === definition.table.selection && fxGrid.permission.deletes(permission) && !onlyView"
                         glossy
                         round
                         dense
@@ -560,7 +560,7 @@ export default {
                                     relations: self.relations,
                                 },
                             };
-                        }, 500);
+                        }, 100);
                         return;
                     }
                 } else {

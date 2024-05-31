@@ -632,7 +632,7 @@ export default {
                                     row: row,
                                 },
                             };
-                        }, 500);
+                        }, 100);
                         return;
                     }
                 } else {
