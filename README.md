@@ -1,8 +1,8 @@
 # Ideahut Quasar Central <img height="32" src="https://avatars.githubusercontent.com/u/23064371?s=200&v=4" alt="Quasar"> <img height="32" src="https://raw.githubusercontent.com/ideahut-apps-team/ideahut-springboot-docs/main/docs/images/logo.png" alt="Ideahut">
 
-- UI untuk [ideahut-springboot-central](https://github.com/thomson470/ideahut-springboot-central/)
-- Berisi informasi Project & Module
-- Terintegrasi dengan UI Admin (share user)
+- UI untuk [ideahut-springboot-central](https://github.com/thomson470/ideahut-springboot-central/).
+- Berisi informasi Project & Module.
+- Terintegrasi dengan UI Admin (share user).
 
 ## Install
 ```bash
