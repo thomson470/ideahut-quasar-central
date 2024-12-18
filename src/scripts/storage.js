@@ -1,10 +1,10 @@
 import { LocalStorage, Platform } from "quasar";
+import { APP } from "src/scripts/static";
 import { util } from "src/scripts/util";
 import { sha } from "src/scripts/sha";
 
-const DEFAULT_LANGUAGE = process.env.DEFAULT_LANGUAGE;
 const DEVICE_INFO = JSON.stringify(Platform.is);
-const STOREGE_ID = sha.sha1(DEVICE_INFO);
+const STOREGE_ID = sha.sha1(APP.id + DEVICE_INFO);
 
 const persist = function (v) {
     let o;
@@ -73,7 +73,7 @@ const storage = {
         } else {
             let l = o.language;
             if (!util.isString(l)) {
-                l = DEFAULT_LANGUAGE;
+                l = APP.language;
                 o.language = l;
                 persist(o);
             }
