@@ -378,6 +378,7 @@ import { copyToClipboard } from 'quasar'
 import { util } from 'src/scripts/util'
 import { uix } from 'src/scripts/uix'
 import { api } from 'src/scripts/api'
+let self
 
 export default {
   setup() {
@@ -424,7 +425,7 @@ export default {
   },
 
   created() {
-    let self = this
+    self = this
     api.call({
       path: '/tool/image/types',
       onSuccess(data) {
@@ -445,7 +446,6 @@ export default {
      * IMAGE SYNC
      */
     on_image_sync() {
-      let self = this
       let password = self.image.sync.password
       password = util.isString(password) ? password : ''
       if (!password?.length) {
@@ -472,7 +472,6 @@ export default {
      * IMAGE PATH COPY
      */
     on_image_path_copy() {
-      let self = this
       copyToClipboard(self.image.path)
       self.image.copying = true
       setTimeout(function () {
@@ -484,7 +483,6 @@ export default {
      * IMAGE UPLOAD
      */
     on_image_upload() {
-      let self = this
       let type = self.image.type
       if (!type?.value) {
         uix.error('error.required', 'label.type')
@@ -519,7 +517,6 @@ export default {
      * IMAGE SYNC
      */
     on_image_sync_click() {
-      let self = this
       self.image.sync = {
         show: true,
         password: null,
@@ -530,12 +527,10 @@ export default {
      * ADMIN UPLOAD
      */
     on_admin_upload(scope) {
-      util.log(scope)
       if (!(util.isArray(scope.files) && scope.files.length)) {
         uix.error('error.required', 'label.file')
         return
       }
-      let self = this
       let form = new FormData()
       form.append('file', scope.files[0])
       self.admin.loading = true
@@ -560,7 +555,6 @@ export default {
      * BCRYPT COPY
      */
     on_bcrypt_copy() {
-      let self = this
       copyToClipboard(self.bcrypt.gen_hash)
       self.bcrypt.copying = true
       setTimeout(function () {
@@ -572,7 +566,6 @@ export default {
      * BCRYPT GENERATE
      */
     on_bcrypt_generate() {
-      let self = this
       let password = self.bcrypt.gen_pass
       password = util.isString(password) ? password : ''
       if (!password?.length) {
@@ -600,7 +593,6 @@ export default {
      * BCRYPT CHECK
      */
     on_bcrypt_check() {
-      let self = this
       self.bcrypt.chk_result = null
       let password = self.bcrypt.chk_pass
       password = util.isString(password) ? password : ''
@@ -635,7 +627,6 @@ export default {
      * PASSWORD ENCRYPT
      */
     on_password_encrypt() {
-      let self = this
       let password = self.password.value
       password = util.isString(password) ? password : ''
       if (!password?.length) {
@@ -663,7 +654,6 @@ export default {
      * PASSWORD COPY
      */
     on_password_copy() {
-      let self = this
       copyToClipboard(self.password.hashed)
       self.password.copying = true
       setTimeout(function () {

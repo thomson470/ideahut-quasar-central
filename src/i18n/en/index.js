@@ -65,5 +65,6 @@ export default {
     upload: 'Upload',
     file: 'File',
     successfully_uploaded: 'Successfully Uploaded',
+    redirecting: 'Redirecting',
   },
 }

@@ -117,14 +117,20 @@
     full-width
     full-height
   >
-    <Module :parameters="dialog.module.parameters" />
+    <Module
+      :parameters="dialog.module.parameters"
+      :style="dialog.module.style"
+      v-touch-pan.mouse="dialog.module.onDrag"
+    />
   </q-dialog>
 </template>
 
 <script>
 import { ref, defineAsyncComponent } from 'vue'
 import { util } from 'src/scripts/util'
+import { uix } from 'src/scripts/uix'
 import { api } from 'src/scripts/api'
+let self
 
 export default {
   components: {
@@ -152,16 +158,13 @@ export default {
         { label: 'Date (Desc)', value: '-createdOn' },
       ]),
       dialog: ref({
-        module: {
-          show: false,
-          parameters: null,
-        },
+        module: uix.dialog.init(() => self.dialog.module),
       }),
     }
   },
 
   created() {
-    let self = this
+    self = this
     self.get_projects()
   },
   methods: {
@@ -169,7 +172,6 @@ export default {
      * GET PROJECTS
      */
     get_projects() {
-      let self = this
       self.loading = true
       api.call({
         path: '/projects',
@@ -213,7 +215,6 @@ export default {
      * UPDATE PAGE
      */
     on_update_page(value) {
-      let self = this
       self.page.value = value
       self.get_projects()
     },
@@ -222,7 +223,6 @@ export default {
      * SORT UPDATE
      */
     on_sort_update(value) {
-      let self = this
       self.order = value
       self.get_projects()
     },
@@ -231,13 +231,9 @@ export default {
      * DIALOG MODULE
      */
     on_dialog_module(project) {
-      let self = this
-      self.dialog.module = {
-        show: true,
-        parameters: {
-          project: project,
-        },
-      }
+      uix.dialog.show(self.dialog.module, {
+        project: project,
+      })
     },
   },
 }

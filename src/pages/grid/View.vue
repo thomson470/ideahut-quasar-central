@@ -1,7 +1,11 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;')">
-    <q-card-section class="header-main">
+  <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;') + dialog.main.style">
+    <q-card-section
+      class="header-main"
+      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+      v-touch-pan.mouse="dialog.main.onDrag"
+    >
       <q-item class="q-pr-none">
         <q-item-section>
           <q-item-label class="text-h6 text-white">{{ title }}</q-item-label>
@@ -33,28 +37,55 @@
         class="q-mb-xs"
         style="max-height: 200px; overflow: scroll"
       />
-      <div v-if="forms.length" class="q-mb-xs" style="width: 100%">
-        <q-btn
-          v-for="(form, index) in forms"
-          :key="index"
-          :label="form.title"
-          class="full-width q-mt-xs q-mb-xs text-weight-bold"
-          no-caps
-          glossy
-          :loading="loading['form_' + index]"
-          @click="on_form_click(form, index)"
-        />
+      <div v-if="template.childrenFirst">
+        <div v-if="tables.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(table, index) in tables"
+            :key="index"
+            :label="table.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            @click="on_table_click(table)"
+          />
+        </div>
+        <div v-if="forms.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(form, index) in forms"
+            :key="index"
+            :label="form.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            :loading="loading['form_' + index]"
+            @click="on_form_click(form, index)"
+          />
+        </div>
       </div>
-      <div v-if="tables.length" class="q-mb-xs" style="width: 100%">
-        <q-btn
-          v-for="(table, index) in tables"
-          :key="index"
-          :label="table.title"
-          class="full-width q-mt-xs q-mb-xs text-weight-bold"
-          no-caps
-          glossy
-          @click="on_table_click(table)"
-        />
+      <div v-else>
+        <div v-if="forms.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(form, index) in forms"
+            :key="index"
+            :label="form.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            :loading="loading['form_' + index]"
+            @click="on_form_click(form, index)"
+          />
+        </div>
+        <div v-if="tables.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(table, index) in tables"
+            :key="index"
+            :label="table.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            @click="on_table_click(table)"
+          />
+        </div>
       </div>
     </q-card-section>
   </q-card>
@@ -64,7 +95,7 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
     <FormV :parameters="dialog.form.parameters" />
   </q-dialog>
@@ -73,7 +104,7 @@
     v-model="dialog.table.show"
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
     full-height
   >
     <Table2 :parameters="dialog.table.parameters" @close="on_close_dialog_table" />
@@ -82,10 +113,12 @@
 
 <script>
 import { ref, defineAsyncComponent } from 'vue'
+import { APP } from 'src/scripts/static'
 import { util } from 'src/scripts/util'
 import { api } from 'src/scripts/api'
 import { uix } from 'src/scripts/uix'
 import { grid as fxGrid } from 'src/scripts/grid'
+let self
 
 export default {
   props: ['parameters'],
@@ -95,28 +128,25 @@ export default {
   },
   setup() {
     return {
+      APP,
       util,
       title: ref(null),
       fields: ref([]),
+      template: ref(null),
       forms: ref([]),
       tables: ref([]),
       loading: ref({}),
       replica: ref(null),
       dialog: ref({
-        form: {
-          show: false,
-          parameters: null,
-        },
-        table: {
-          show: false,
-          parameters: null,
-        },
+        main: uix.dialog.init(() => self.dialog.main),
+        form: uix.dialog.init(),
+        table: uix.dialog.init(),
       }),
     }
   },
 
   created() {
-    let self = this
+    self = this
     let params = fxGrid.get.object(self.parameters)
     let row = fxGrid.get.object(params.row)
     let template = fxGrid.get.object(params.template)
@@ -150,6 +180,7 @@ export default {
     }
     self.forms = fxGrid.get.array(template.forms)
     self.tables = fxGrid.get.array(template.children)
+    self.template = template
   },
 
   methods: {
@@ -157,7 +188,6 @@ export default {
      * FORM CLICK
      */
     on_form_click(form, index) {
-      let self = this
       let params = fxGrid.get.object(self.parameters)
       let template = fxGrid.get.object(params.template)
       let row = fxGrid.get.object(params.row)
@@ -191,14 +221,12 @@ export default {
         onSuccess(data) {
           data = fxGrid.get.object(data)
           fxGrid.inject.pkAndGridId(form.id, data, template._grid_id_)
-          self.dialog.form = {
-            show: true,
-            parameters: {
-              form: form,
-              data: data,
-              replica: self.replica,
-            },
-          }
+          uix.dialog.show(self.dialog.form, {
+            template: template,
+            form: form,
+            data: data,
+            replica: self.replica,
+          })
         },
       })
     },
@@ -207,7 +235,6 @@ export default {
      * TABLE CLICK
      */
     on_table_click(table) {
-      let self = this
       let params = fxGrid.get.object(self.parameters)
       let template = fxGrid.get.object(params.template)
       let row = fxGrid.get.object(params.row)
@@ -220,25 +247,21 @@ export default {
         relation.value = util.getFieldValue(relation.source, row)
       }
       table._grid_id_ = template._grid_id_
-      self.dialog.table = {
-        show: true,
-        parameters: {
-          template: template,
-          definition: table,
-          parentRow: row,
-          relations: relations,
-          onlyView: true,
-          replica: self.replica,
-        },
-      }
+      uix.dialog.show(self.dialog.table, {
+        template: template,
+        definition: table,
+        parentRow: row,
+        relations: relations,
+        onlyView: true,
+        replica: self.replica,
+      })
     },
 
     /*
      * CLOSE TABLE DIALOG
      */
     on_close_dialog_table() {
-      let self = this
-      self.dialog.table = { show: false, parameters: null }
+      uix.dialog.hide(self.dialog.table)
     },
   },
 }

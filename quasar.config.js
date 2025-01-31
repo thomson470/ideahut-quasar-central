@@ -27,8 +27,8 @@ export default defineConfig((ctx) => {
       // 'themify',
       // 'line-awesome',
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
-      //'roboto-font', // optional, you are not bound to it
-      //'material-icons', // optional, you are not bound to it
+      // 'roboto-font', // optional, you are not bound to it
+      // 'material-icons', // optional, you are not bound to it
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
@@ -91,7 +91,7 @@ export default defineConfig((ctx) => {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
     devServer: {
       https: false,
-      port: 8084,
+      port: 8085,
       open: false, // opens browser window automatically
     },
 
@@ -113,9 +113,9 @@ export default defineConfig((ctx) => {
       plugins: ['Dialog', 'Notify', 'Loading'],
     },
 
-    animations: 'all', // --- includes all animations
+    // animations: 'all', // --- includes all animations
     // https://v2.quasar.dev/options/animations
-    //animations: [],
+    animations: 'all',
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#sourcefiles
     // sourceFiles: {
@@ -158,7 +158,7 @@ export default defineConfig((ctx) => {
     pwa: {
       workboxMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
       // swFilename: 'sw.js',
-      // manifestFilename: 'manifest.json'
+      // manifestFilename: 'manifest.json',
       // extendManifestJson (json) {},
       // useCredentialsForManifestTag: true,
       // injectPwaMetaTags: false,

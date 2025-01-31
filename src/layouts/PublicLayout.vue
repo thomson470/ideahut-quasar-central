@@ -1,6 +1,9 @@
 <template>
   <q-layout view="hHh lpR fFf" class="background-layout">
-    <q-header class="header-main">
+    <q-header
+      class="header-main"
+      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+    >
       <q-toolbar>
         <q-btn
           flat
@@ -38,6 +41,7 @@ import { APP } from 'src/scripts/static'
 import { util } from 'src/scripts/util'
 import { api } from 'src/scripts/api'
 import { uix } from 'src/scripts/uix'
+let self
 
 export default {
   setup() {
@@ -50,7 +54,7 @@ export default {
     }
   },
   created() {
-    let self = this
+    self = this
     self.is_dark_mode = uix.dark.active()
   },
   methods: {
@@ -58,7 +62,7 @@ export default {
      * HEADER MENU
      */
     on_header_menu_click() {
-      window.location.href = (util.webPath() !== '/' ? util.webPath() : '') + '/'
+      window.location.href = util.webPath() + '/'
     },
 
     /*

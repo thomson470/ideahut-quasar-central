@@ -1,6 +1,9 @@
 <template>
   <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;')">
-    <q-card-section class="q-pa-none header-main">
+    <q-card-section
+      class="q-pa-none header-main"
+      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+    >
       <q-item class="q-pr-none">
         <q-item-section>
           <q-item-label class="text-h6 text-white">{{ $t('label.search') }}</q-item-label>
@@ -32,7 +35,7 @@
                 filled
                 autogrow
                 class="col-6 q-pr-xs"
-                style="max-height: 120px; overflow: scroll"
+                style="max-height: 200px; overflow: scroll"
               />
               <q-input
                 type="text"
@@ -41,7 +44,7 @@
                 filled
                 autogrow
                 class="col-6 q-pl-xs"
-                style="max-height: 120px; overflow: scroll"
+                style="max-height: 200px; overflow: scroll"
               />
             </div>
             <q-input
@@ -51,7 +54,7 @@
               v-model="filter.value"
               filled
               autogrow
-              style="max-height: 120px; overflow: scroll"
+              style="max-height: 200px; overflow: scroll"
             />
           </div>
 
@@ -85,7 +88,7 @@
                       transition-show="scale"
                       transition-hide="scale"
                       cover
-                      @before-show="on_before_show_calendar(filter, 'tab', 'proxy_value', 'value')"
+                      @before-show="uix.calendar.beforeShow(filter, 'tab', 'proxy_value', 'value')"
                     >
                       <div class="bg-primary">
                         <q-tabs
@@ -174,7 +177,7 @@
                       transition-hide="scale"
                       cover
                       @before-show="
-                        on_before_show_calendar(filter, 'tab2', 'proxy_value2', 'value2')
+                        uix.calendar.beforeShow(filter, 'tab2', 'proxy_value2', 'value2')
                       "
                     >
                       <div class="bg-primary">
@@ -257,7 +260,7 @@
                     transition-show="scale"
                     transition-hide="scale"
                     cover
-                    @before-show="on_before_show_calendar(filter, 'tab', 'proxy_value', 'value')"
+                    @before-show="uix.calendar.beforeShow(filter, 'tab', 'proxy_value', 'value')"
                   >
                     <div class="bg-primary">
                       <q-tabs
@@ -367,20 +370,26 @@
 
 <script>
 import { ref } from 'vue'
+import { APP } from 'src/scripts/static'
 import { util } from 'src/scripts/util'
+import { uix } from 'src/scripts/uix'
+let self
 
 export default {
   props: ['parameters'],
   emits: ['close'],
   setup() {
     return {
+      APP,
       util,
+      uix,
+
       filters: ref([]),
     }
   },
 
   created() {
-    let self = this
+    self = this
     let params = util.isObject(self.parameters) ? self.parameters : {}
     self.filters = util.isArray(params.filters) ? params.filters : []
   },
@@ -389,7 +398,6 @@ export default {
      * RESET CLICK
      */
     on_reset_click() {
-      let self = this
       for (const filter of self.filters) {
         delete filter.value
         delete filter.value2
@@ -400,7 +408,6 @@ export default {
      * FILTER CLICK
      */
     on_filter_click() {
-      let self = this
       for (const filter of self.filters) {
         if (util.isDefined(filter.value) && filter.value === null) {
           delete filter.value
@@ -410,14 +417,6 @@ export default {
         }
       }
       self.$emit('close', self.filters)
-    },
-
-    /*
-     * BEFORE SHOW CALENDAR
-     */
-    on_before_show_calendar(filter, key_tab, key_proxy, key_value) {
-      filter[key_proxy] = filter[key_value]
-      filter[key_tab] = 'time' === filter.type ? 'time' : 'date'
     },
   },
 }

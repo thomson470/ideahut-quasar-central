@@ -2,6 +2,8 @@ import { util } from 'src/scripts/util'
 import { uix } from 'src/scripts/uix'
 import { api } from 'src/scripts/api'
 
+const F = eval
+
 const grid = {
   /*
    * ID
@@ -39,28 +41,28 @@ const grid = {
         for (const element of elements) {
           let format = element.format
           if (util.isString(format) && format.startsWith('function')) {
-            format = eval('(' + format + ')')
+            format = F('(' + format + ')')
             element.format = format
           } else {
             delete element.format
           }
           let toValue = element.toValue
           if (util.isString(toValue) && toValue.startsWith('function')) {
-            toValue = eval('(' + toValue + ')')
+            toValue = F('(' + toValue + ')')
             element.toValue = toValue
           } else {
             delete element.toValue
           }
           let nullValue = element.nullValue
           if (util.isString(nullValue) && nullValue.startsWith('function')) {
-            nullValue = eval('(' + nullValue + ')')
+            nullValue = F('(' + nullValue + ')')
             element.nullValue = nullValue
           } else {
             delete element.nullValue
           }
           let rowToValue = element.rowToValue
           if (util.isString(rowToValue) && rowToValue.startsWith('function')) {
-            rowToValue = eval('(' + rowToValue + ')')
+            rowToValue = F('(' + rowToValue + ')')
             element.rowToValue = rowToValue
           } else {
             delete element.rowToValue
@@ -139,10 +141,10 @@ const grid = {
         } else if ('EMBEDDED' === idInfo.type) {
           for (const data of value) {
             pk = data[idInfo.fields[0]]
-            if (Object.keys(pk).length === 0) {
-              pk = undefined
-            } else {
+            if (util.isObject(pk) && Object.keys(pk).length !== 0) {
               pk = JSON.stringify(pk)
+            } else {
+              pk = undefined
             }
             data._pk_ = pk
             data._grid_id_ = gridId
@@ -167,10 +169,10 @@ const grid = {
           }
         } else if ('EMBEDDED' === idInfo.type) {
           pk = value[idInfo.fields[0]]
-          if (Object.keys(pk).length === 0) {
-            pk = undefined
-          } else {
+          if (util.isObject(pk) && Object.keys(pk).length !== 0) {
             pk = JSON.stringify(pk)
+          } else {
+            pk = undefined
           }
         } else if ('STANDARD' === idInfo.type) {
           pk = value[idInfo.fields[0]]
@@ -387,10 +389,9 @@ const grid = {
       let body = grid.copy(definition.crud)
       if (util.isNumber(replica) && replica > -1) {
         body.replica = replica
-        let allUseSameReplica = true === input.allUseSameReplica
-        if (allUseSameReplica) {
-          if (util.isArray(body.joins)) {
-            for (const join of body.joins) {
+        if (util.isArray(body.joins)) {
+          for (const join of body.joins) {
+            if (true === join.enableReplica) {
               join.replica = body.replica
             }
           }
@@ -504,9 +505,9 @@ const grid = {
           onFinish() {
             input.deleting = false
           },
-          onSuccess() {
+          onSuccess(data) {
             if (util.isFunction(input.onSuccess)) {
-              input.onSuccess()
+              input.onSuccess(data)
             }
           },
         })

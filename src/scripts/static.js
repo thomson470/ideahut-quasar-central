@@ -5,11 +5,14 @@ const STATIC = {
     title: '',
     //web: '',
     //api: 'http://localhost:6401',
-    web: '/ui',
+    web: '/__central__',
     api: '',
     timeout: 60,
     language: 'en',
     debug: true,
+    //color: {
+    //    header: "linear-gradient(180deg, rgb(188, 14, 49) 0%, rgba(15, 142, 231, 1) 100%)"
+    //},
   },
 }
 const APP = STATIC['__central__']

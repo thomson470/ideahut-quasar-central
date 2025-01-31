@@ -265,9 +265,14 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
-    <Search :parameters="dialog.search.parameters" @close="on_close_dialog_search" />
+    <Search
+      :parameters="dialog.search.parameters"
+      @close="on_close_dialog_search"
+      :style="dialog.search.style"
+      v-touch-pan.mouse="dialog.search.onDrag"
+    />
   </q-dialog>
 
   <q-dialog
@@ -275,7 +280,7 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
     <View :parameters="dialog.view.parameters" />
   </q-dialog>
@@ -285,7 +290,7 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
     <Edit :parameters="dialog.edit.parameters" @close="on_close_dialog_edit" />
   </q-dialog>
@@ -297,7 +302,7 @@ import { util } from 'src/scripts/util'
 import { uix } from 'src/scripts/uix'
 import { api } from 'src/scripts/api'
 import { grid as fxGrid } from 'src/scripts/grid'
-
+let self
 const PREFIX = util.uuid()
 window.__util__ = util
 window.__grid__ = {}
@@ -328,34 +333,21 @@ export default {
       uix,
       util,
       fxGrid,
-
       is_template_loading: ref(false),
       template: ref({}),
       permission: ref({}),
       parent: ref(null),
       name: ref(null),
       replica: ref(null),
-
       dialog: ref({
-        search: {
-          show: false,
-          parameters: null,
-        },
-        view: {
-          show: false,
-          parameters: null,
-        },
-        edit: {
-          show: false,
-          parameters: null,
-        },
+        search: uix.dialog.init(() => self.dialog.search),
+        view: uix.dialog.init(),
+        edit: uix.dialog.init(),
       }),
-
       search: ref({
         filters: [],
         empty: true,
       }),
-
       table: ref({
         rows: [],
         columns: [],
@@ -368,7 +360,8 @@ export default {
     }
   },
   created() {
-    this.do_load_grid()
+    self = this
+    self.do_load_grid()
   },
   beforeUpdate() {
     this.do_load_grid()
@@ -382,7 +375,6 @@ export default {
       if (!util.isObject(window.__grid__)) {
         window.__grid__ = {}
       }
-      let self = this
       let parent = fxGrid.get.string(self.$route.query.parent, '_')
       let name = fxGrid.get.string(self.$route.query.name, '')
       if (parent === self.parent && name === self.name) {
@@ -474,7 +466,6 @@ export default {
      * GET PERMISSION
      */
     get_permission() {
-      let self = this
       let template = self.template
       let table = fxGrid.get.object(template.table)
       let permission = { actions: fxGrid.copy(template.actions) }
@@ -487,7 +478,6 @@ export default {
      * LOAD DATA
      */
     do_load_data() {
-      let self = this
       self.table = {
         rows: [],
         columns: [{ name: '_pk_' }],
@@ -522,14 +512,12 @@ export default {
      * REQUEST
      */
     do_request(props) {
-      let self = this
       fxGrid.action.page({
         props: props,
         table: self.table,
         search: self.search,
         definition: self.template,
         replica: self.replica,
-        allUseSameReplica: self.template.allUseSameReplica,
       })
     },
 
@@ -537,7 +525,6 @@ export default {
      * REFRESH CLICK
      */
     on_refresh_click() {
-      let self = this
       self.do_request({
         pagination: self.table.pagination,
       })
@@ -547,7 +534,6 @@ export default {
      * DELETE CLICK
      */
     on_delete_click(scope) {
-      let self = this
       fxGrid.action.delete({
         row: scope.row,
         definition: self.template,
@@ -566,20 +552,16 @@ export default {
      * SEARCH CLICK
      */
     on_search_click() {
-      let self = this
-      let dialog = self.dialog.search
-      dialog.parameters = {
+      uix.dialog.show(self.dialog.search, {
         filters: fxGrid.copy(self.search.filters),
         template: self.template,
-      }
-      dialog.show = true
+      })
     },
 
     /*
      * CLOSE SEARCH DIALOG
      */
     on_close_dialog_search(filters) {
-      let self = this
       if (util.isArray(filters)) {
         let search = self.search,
           v1,
@@ -594,7 +576,7 @@ export default {
             break
           }
         }
-        self.dialog.search = { show: false, parameters: null }
+        uix.dialog.hide(self.dialog.search)
         self.table.pagination.page = 1
         self.do_request({
           pagination: self.table.pagination,
@@ -606,68 +588,52 @@ export default {
      * VIEW CLICK
      */
     on_view_click(scope) {
-      let self = this
-      self.dialog.view = {
-        show: true,
-        parameters: {
-          template: self.template,
-          replica: self.replica,
-          row: scope.row,
-        },
-      }
+      uix.dialog.show(self.dialog.view, {
+        template: self.template,
+        replica: self.replica,
+        row: scope.row,
+      })
     },
 
     /*
      * EDIT CLICK
      */
     on_edit_click(scope) {
-      let self = this
-      self.dialog.edit = {
-        show: true,
-        parameters: {
-          template: self.template,
-          replica: self.replica,
-          row: scope.row,
-          index: scope.rowIndex,
-        },
-      }
+      uix.dialog.show(self.dialog.edit, {
+        template: self.template,
+        replica: self.replica,
+        row: scope.row,
+        index: scope.rowIndex,
+      })
     },
 
     /*
      * ADD CLICK
      */
     on_add_click() {
-      let self = this
-      self.dialog.edit = {
-        show: true,
-        parameters: {
-          template: self.template,
-          replica: self.replica,
-        },
-      }
+      uix.dialog.show(self.dialog.edit, {
+        template: self.template,
+        replica: self.replica,
+      })
     },
 
     /*
      * CLOSE EDIT DIALOG
      */
     on_close_dialog_edit(result) {
-      let self = this
       let row = result.row
       if (row) {
         if (result.is_edit) {
           if (util.isDefined(row._pk_)) {
             self.table.rows[result.index] = row
           } else {
-            self.dialog.edit = { show: false, parameters: null }
+            uix.dialog.hide(self.dialog.edit)
             setTimeout(function () {
-              self.dialog.edit = {
-                show: true,
-                parameters: {
-                  template: self.template,
-                  replica: self.replica,
-                  row: row,
-                },
-              }
+              uix.dialog.show(self.dialog.edit, {
+                template: self.template,
+                replica: self.replica,
+                row: row,
+              })
             }, 100)
             return
           }
@@ -677,14 +643,13 @@ export default {
           })
         }
       }
-      self.dialog.edit = { show: false, parameters: null }
+      uix.dialog.hide(self.dialog.edit)
     },
 
     /*
      * PAGE CHANGED
      */
     on_page_changed() {
-      let self = this
       let page = +self.table.pagination.page
       if (!isNaN(page) && page > 0) {
         self.do_request({

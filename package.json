@@ -1,8 +1,8 @@
 {
   "name": "ideahut-quasar-central",
   "version": "0.0.1",
-  "description": "Admin Central",
-  "productName": "Admin Central",
+  "description": "Ideahut Central",
+  "productName": "Ideahut Central",
   "author": "Thomson <thomson470@gmail.com>",
   "type": "module",
   "private": true,

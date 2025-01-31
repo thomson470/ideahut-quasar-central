@@ -1,7 +1,11 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;')">
-    <q-card-section class="header-main">
+  <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;') + dialog.main.style">
+    <q-card-section
+      class="header-main"
+      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+      v-touch-pan.mouse="dialog.main.onDrag"
+    >
       <q-item class="q-pr-none">
         <q-item-section>
           <q-item-label class="text-h6 text-white">{{
@@ -82,7 +86,7 @@
                 transition-show="scale"
                 transition-hide="scale"
                 cover
-                @before-show="on_before_show_calendar(field)"
+                @before-show="uix.calendar.beforeShow(field, 'tab', 'proxy_value', 'value')"
               >
                 <div class="bg-primary">
                   <q-tabs
@@ -190,28 +194,55 @@
           filled
         />
       </div>
-      <div v-if="is_edit && template.forms?.length" class="q-mb-xs" style="width: 100%">
-        <q-btn
-          v-for="(form, index) in template.forms"
-          :key="index"
-          :label="form.title"
-          class="full-width q-mt-xs q-mb-xs text-weight-bold"
-          no-caps
-          glossy
-          :loading="loading['form_' + index]"
-          @click="on_form_click(form, index)"
-        />
+      <div v-if="template.childrenFirst">
+        <div v-if="is_edit && template.children?.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(table, index) in template.children"
+            :key="index"
+            :label="table.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            @click="on_table_click(table)"
+          />
+        </div>
+        <div v-if="is_edit && template.forms?.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(form, index) in template.forms"
+            :key="index"
+            :label="form.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            :loading="loading['form_' + index]"
+            @click="on_form_click(form, index)"
+          />
+        </div>
       </div>
-      <div v-if="is_edit && template.children?.length" class="q-mb-xs" style="width: 100%">
-        <q-btn
-          v-for="(table, index) in template.children"
-          :key="index"
-          :label="table.title"
-          class="full-width q-mt-xs q-mb-xs text-weight-bold"
-          no-caps
-          glossy
-          @click="on_table_click(table)"
-        />
+      <div v-else>
+        <div v-if="is_edit && template.forms?.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(form, index) in template.forms"
+            :key="index"
+            :label="form.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            :loading="loading['form_' + index]"
+            @click="on_form_click(form, index)"
+          />
+        </div>
+        <div v-if="is_edit && template.children?.length" class="q-mb-xs" style="width: 100%">
+          <q-btn
+            v-for="(table, index) in template.children"
+            :key="index"
+            :label="table.title"
+            class="full-width q-mt-xs q-mb-xs text-weight-bold"
+            no-caps
+            glossy
+            @click="on_table_click(table)"
+          />
+        </div>
       </div>
     </q-card-section>
     <q-separator />
@@ -255,7 +286,7 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
     <Pick :parameters="dialog.pick.parameters" @close="on_close_dialog_pick" />
   </q-dialog>
@@ -264,7 +295,7 @@
     v-model="dialog.table.show"
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
     full-height
   >
     <Table2 :parameters="dialog.table.parameters" @close="on_close_dialog_table" />
@@ -274,7 +305,7 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
     <FormE :parameters="dialog.form.parameters" @close="on_close_dialog_form" />
   </q-dialog>
@@ -282,10 +313,12 @@
 
 <script>
 import { ref, defineAsyncComponent } from 'vue'
+import { APP } from 'src/scripts/static'
 import { util } from 'src/scripts/util'
 import { uix } from 'src/scripts/uix'
 import { api } from 'src/scripts/api'
 import { grid as fxGrid } from 'src/scripts/grid'
+let self
 
 export default {
   props: ['parameters'],
@@ -297,6 +330,9 @@ export default {
   },
   setup() {
     return {
+      APP,
+      uix,
+
       id: ref(null),
       is_edit: ref(false),
       saving: ref(false),
@@ -311,24 +347,16 @@ export default {
       loading: ref({}),
 
       dialog: ref({
-        form: {
-          show: false,
-          parameters: null,
-        },
-        pick: {
-          show: false,
-          parameters: null,
-        },
-        table: {
-          show: false,
-          parameters: null,
-        },
+        main: uix.dialog.init(() => self.dialog.main),
+        form: uix.dialog.init(),
+        pick: uix.dialog.init(),
+        table: uix.dialog.init(),
       }),
     }
   },
 
   created() {
-    let self = this
+    self = this
     self.fields = []
     self.is_edit = false
     let params = fxGrid.get.object(self.parameters)
@@ -396,7 +424,6 @@ export default {
      * FORM CLICK
      */
     on_form_click(form, index) {
-      let self = this
       let params = fxGrid.get.object(self.parameters)
       let row = fxGrid.get.object(params.row)
       let relations = fxGrid.get.array(form.relations)
@@ -430,18 +457,15 @@ export default {
         onSuccess(data) {
           data = fxGrid.get.object(data)
           fxGrid.inject.pkAndGridId(form.id, data, self.template._grid_id_)
-          self.dialog.form = {
-            show: true,
-            parameters: {
-              form: form,
-              template: self.template,
-              row: row,
-              data: data,
-              replica: self.replica,
-              relations: relations,
-              is_edit: util.isDefined(data._pk_),
-            },
-          }
+          uix.dialog.show(self.dialog.form, {
+            form: form,
+            template: self.template,
+            row: row,
+            data: data,
+            replica: self.replica,
+            relations: relations,
+            is_edit: util.isDefined(data._pk_),
+          })
         },
       })
     },
@@ -450,32 +474,24 @@ export default {
      * CLOSE FORM DIALOG
      */
     on_close_dialog_form() {
-      let self = this
-      self.dialog.form = {
-        show: false,
-        parameters: null,
-      }
+      uix.dialog.hide(self.dialog.form)
     },
 
     /*
      * PICK CLICK
      */
     on_pick_select_click(field) {
-      let self = this
       let pick = self.template.picks[field.pick]
       if (!util.isObject(pick)) {
         uix.error('error.required', 'label.pick')
         return
       }
-      self.dialog.pick = {
-        show: true,
-        parameters: {
-          template: self.template,
-          field: field,
-          pick: pick,
-          replica: self.replica,
-        },
-      }
+      uix.dialog.show(self.dialog.pick, {
+        template: self.template,
+        field: field,
+        pick: pick,
+        replica: self.replica,
+      })
     },
 
     /*
@@ -490,21 +506,19 @@ export default {
      * CLOSE PICK DIALOG
      */
     on_close_dialog_pick(value) {
-      let self = this
       if (value?._pk_) {
         let field = self.dialog.pick.parameters.field
         let text = util.isFunction(field.format) ? field.format(value) : value + ''
         field.value = value
         field.text = text
       }
-      self.dialog.pick = { show: false, parameters: null, field: null }
+      uix.dialog.hide(self.dialog.pick)
     },
 
     /*
      * TABLE CLICK
      */
     on_table_click(table) {
-      let self = this
       let params = fxGrid.get.object(self.parameters)
       let template = fxGrid.get.object(params.template)
       let row = fxGrid.get.object(params.row)
@@ -517,32 +531,27 @@ export default {
         relation.value = util.getFieldValue(relation.source, row)
       }
       table._grid_id_ = template._grid_id_
-      self.dialog.table = {
-        show: true,
-        parameters: {
-          template: template,
-          definition: table,
-          parentRow: row,
-          relations: relations,
-          onlyView: false,
-          replica: self.replica,
-        },
-      }
+      uix.dialog.show(self.dialog.table, {
+        template: template,
+        definition: table,
+        parentRow: row,
+        relations: relations,
+        onlyView: false,
+        replica: self.replica,
+      })
     },
 
     /*
      * CLOSE TABLE DIALOG
      */
     on_close_dialog_table() {
-      let self = this
-      self.dialog.table = { show: false, parameters: null }
+      uix.dialog.hide(self.dialog.table)
     },
 
     /*
      * CLONE CLICK
      */
     on_clone_click() {
-      let self = this
       let row = self.row ? fxGrid.copy(self.row) : null
       if (row?._pk_) {
         delete row._pk_
@@ -561,7 +570,6 @@ export default {
      * SAVE CLICK
      */
     on_save_click() {
-      let self = this
       fxGrid.action.save({
         id: self.id,
         fields: self.fields,
@@ -603,14 +611,6 @@ export default {
           }
         },
       })
-    },
-
-    /*
-     * CALENDAR
-     */
-    on_before_show_calendar(field) {
-      field.proxy_value = field.value
-      field.tab = 'time' === field.type ? 'time' : 'date'
     },
   },
 }

@@ -1,7 +1,10 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;')">
-    <q-card-section class="q-pa-none header-main">
+    <q-card-section
+      class="q-pa-none header-main"
+      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+    >
       <q-item class="q-pr-none">
         <q-item-section>
           <q-item-label class="text-h6 text-white">{{
@@ -82,7 +85,7 @@
                 transition-show="scale"
                 transition-hide="scale"
                 cover
-                @before-show="on_before_show_calendar(field)"
+                @before-show="uix.calendar.beforeShow(field, 'tab', 'proxy_value', 'value')"
               >
                 <div class="bg-primary">
                   <q-tabs
@@ -232,7 +235,7 @@
     persistent
     transition-show="slide-down"
     transition-hide="slide-down"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
     <Pick :parameters="dialog.pick.parameters" @close="on_close_dialog_pick" />
   </q-dialog>
@@ -240,10 +243,12 @@
 
 <script>
 import { ref, defineAsyncComponent } from 'vue'
+import { APP } from 'src/scripts/static'
 import { util } from 'src/scripts/util'
-import { api } from 'src/scripts/api'
 import { uix } from 'src/scripts/uix'
+import { api } from 'src/scripts/api'
 import { grid as fxGrid } from 'src/scripts/grid'
+let self
 
 export default {
   props: ['parameters'],
@@ -253,6 +258,8 @@ export default {
   },
   setup() {
     return {
+      APP,
+      uix,
       id: ref(null),
       is_edit: ref(false),
       saving: ref(false),
@@ -264,23 +271,17 @@ export default {
       row: ref(null),
       replica: ref(null),
       relations: ref([]),
-
       enums: ref({}),
       options: ref({}),
       loading: ref({}),
-
       dialog: ref({
-        pick: {
-          show: false,
-          field: null,
-          parameters: null,
-        },
+        pick: uix.dialog.init(),
       }),
     }
   },
 
   created() {
-    let self = this
+    self = this
     self.fields = []
     self.is_edit = false
     let params = fxGrid.get.object(self.parameters)
@@ -348,7 +349,6 @@ export default {
      * PICK CLICK
      */
     on_pick_select_click(field) {
-      let self = this
       let pick = self.template.picks[field.pick]
       if (!util.isObject(pick)) {
         uix.error('error.required', 'label.pick')
@@ -358,16 +358,13 @@ export default {
       for (const relation of relations) {
         relation.value = util.getFieldValue(relation.source, self.parentRow)
       }
-      self.dialog.pick = {
-        show: true,
-        parameters: {
-          template: self.template,
-          field: field,
-          pick: pick,
-          relations: relations,
-          replica: self.replica,
-        },
-      }
+      uix.dialog.show(self.dialog.pick, {
+        template: self.template,
+        field: field,
+        pick: pick,
+        relations: relations,
+        replica: self.replica,
+      })
     },
 
     /*
@@ -382,21 +379,19 @@ export default {
      * CLOSE PICK DIALOG
      */
     on_close_dialog_pick(value) {
-      let self = this
       if (value?._pk_) {
         let field = self.dialog.pick.parameters.field
         let text = util.isFunction(field.format) ? field.format(value) : value + ''
         field.value = value
         field.text = text
       }
-      self.dialog.pick = { show: false, parameters: null, field: null }
+      uix.dialog.hide(self.dialog.pick)
     },
 
     /*
      * CLONE CLICK
      */
     on_clone_click() {
-      let self = this
       let row = self.row ? fxGrid.copy(self.row) : null
       if (row?._pk_) {
         delete row._pk_
@@ -415,7 +410,6 @@ export default {
      * SAVE CLICK
      */
     on_save_click() {
-      let self = this
       fxGrid.action.save({
         id: self.id,
         fields: self.fields,
@@ -458,14 +452,6 @@ export default {
           }
         },
       })
-    },
-
-    /*
-     * CALENDAR
-     */
-    on_before_show_calendar(field) {
-      field.proxy_value = field.value
-      field.tab = 'time' === field.type ? 'time' : 'date'
     },
   },
 }

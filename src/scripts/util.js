@@ -95,6 +95,33 @@ const util = {
   },
 
   /*
+   * CALL IF
+   */
+  callIf(isTrue, fxTrue, fxFalse) {
+    if (true === isTrue) {
+      if (util.isFunction(fxTrue)) {
+        return fxTrue()
+      }
+    } else if (util.isFunction(fxFalse)) {
+      return fxFalse()
+    }
+    return null
+  },
+
+  /*
+   * RUN IF
+   */
+  runIf(isTrue, fxTrue, fxFalse) {
+    if (true === isTrue) {
+      if (util.isFunction(fxTrue)) {
+        fxTrue()
+      }
+    } else if (util.isFunction(fxFalse)) {
+      fxFalse()
+    }
+  },
+
+  /*
    * COPY
    */
   copy: function (value) {

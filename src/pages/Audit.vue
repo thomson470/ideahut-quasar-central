@@ -143,8 +143,14 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
+    backdrop-filter="blur(1px)"
   >
-    <Search :parameters="dialog.search.parameters" @close="on_close_dialog_search" />
+    <Search
+      :parameters="dialog.search.parameters"
+      @close="on_close_dialog_search"
+      :style="dialog.search.style"
+      v-touch-pan.mouse="dialog.search.onDrag"
+    />
   </q-dialog>
 
   <q-dialog
@@ -152,15 +158,22 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
+    backdrop-filter="blur(1px)"
   >
-    <View :parameters="dialog.view.parameters" />
+    <View
+      :parameters="dialog.view.parameters"
+      :style="dialog.view.style"
+      v-touch-pan.mouse="dialog.view.onDrag"
+    />
   </q-dialog>
 </template>
 
 <script>
 import { ref, defineAsyncComponent } from 'vue'
 import { util } from 'src/scripts/util'
+import { uix } from 'src/scripts/uix'
 import { api } from 'src/scripts/api'
+let self
 
 export default {
   components: {
@@ -175,7 +188,6 @@ export default {
       manager: ref(null),
       type: ref(null),
       info: ref({}),
-
       definition: {
         default: {
           visibles: [],
@@ -186,7 +198,6 @@ export default {
           columns: [],
         },
       },
-
       table: ref({
         rows: [],
         visibles: [],
@@ -200,27 +211,19 @@ export default {
         },
         loading: false,
       }),
-
       search: ref({
         filters: [],
         empty: true,
       }),
-
       dialog: ref({
-        search: {
-          show: false,
-          parameters: null,
-        },
-        view: {
-          show: false,
-          parameters: null,
-        },
+        search: uix.dialog.init(() => self.dialog.search),
+        view: uix.dialog.init(() => self.dialog.view),
       }),
     }
   },
 
   created() {
-    let self = this
+    self = this
     self.definition.default = {
       visibles: ['id', 'action', 'replica', 'auditor', 'info', 'type', 'content', 'entry'],
       columns: [
@@ -357,7 +360,6 @@ export default {
      * GET PAGINATION
      */
     get_pagination(props) {
-      let self = this
       let pagination = props?.pagination ? props.pagination : self.table.pagination
       if (pagination) {
         self.table.pagination = pagination
@@ -384,7 +386,6 @@ export default {
      * CREATE SEARCH FILTERS
      */
     create_search_filters() {
-      let self = this
       let columns = self.table.columns
       let visibles = self.table.visibles
       self.search = {
@@ -433,7 +434,6 @@ export default {
      * INIT
      */
     do_init() {
-      let self = this
       let handler = self.$route.query.handler
       let manager = self.$route.query.manager
       let type = self.$route.query.type
@@ -486,12 +486,11 @@ export default {
                       return util.format.date(util.getFieldValue('deletedOn', val), {
                         format: dateFormat,
                       })
-                    } catch (e) {
-                      util.log(e)
+                    } catch {
                       return val
                     }
                   }
-                } else if (true === self.info.isAudit) {
+                } else if (true === self.info.isAuditEntity) {
                   if ('createdOn' === field.name) {
                     column.timestamp = true
                     column.pattern = util.isString(field.format) ? field.format : dateFormat
@@ -500,8 +499,7 @@ export default {
                         return util.format.date(util.getFieldValue('createdOn', val), {
                           format: dateFormat,
                         })
-                      } catch (e) {
-                        util.log(e)
+                      } catch {
                         return val
                       }
                     }
@@ -513,8 +511,7 @@ export default {
                         return util.format.date(util.getFieldValue('updatedOn', val), {
                           format: dateFormat,
                         })
-                      } catch (e) {
-                        util.log(e)
+                      } catch {
                         return val
                       }
                     }
@@ -543,7 +540,6 @@ export default {
      * REQUEST
      */
     do_request(props) {
-      let self = this
       let { page, rowsPerPage, sortBy, descending } = self.get_pagination(props)
       let filters = []
       let search = self.search
@@ -648,20 +644,15 @@ export default {
      * SEARCH CLICK
      */
     on_search_click() {
-      let self = this
-      self.dialog.search = {
-        show: true,
-        parameters: {
-          filters: self.search.filters,
-        },
-      }
+      uix.dialog.show(self.dialog.search, {
+        filters: self.search.filters,
+      })
     },
 
     /*
      * CLOSE SEARCH DIALOG
      */
     on_close_dialog_search(filters) {
-      let self = this
       if (util.isArray(filters)) {
         let search = self.search
         search.filters = filters
@@ -674,7 +665,7 @@ export default {
             break
           }
         }
-        self.dialog.search = { show: false, parameters: null }
+        uix.dialog.hide(self.dialog.search)
         self.table.pagination.page = 1
         self.do_request({
           pagination: self.table.pagination,
@@ -686,7 +677,6 @@ export default {
      * REFRESH CLICK
      */
     on_refresh_click() {
-      let self = this
       if (!self.table.rows?.length) {
         if (self.table.pagination.page > 1) {
           self.table.pagination.page = 1
@@ -701,21 +691,16 @@ export default {
      * VIEW CLICK
      */
     on_view_click(scope) {
-      let self = this
-      self.dialog.view = {
-        show: true,
-        parameters: {
-          scope: scope,
-          columns: self.table.columns,
-        },
-      }
+      uix.dialog.show(self.dialog.view, {
+        scope: scope,
+        columns: self.table.columns,
+      })
     },
 
     /*
      * PAGE CHANGED
      */
     on_page_changed() {
-      let self = this
       let page = +self.table.pagination.page
       if (!isNaN(page) && page > 0) {
         self.do_request({

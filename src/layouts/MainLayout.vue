@@ -1,12 +1,14 @@
 <template>
   <q-layout view="hHh lpR fFf" class="background-layout">
-    <q-header class="header-main">
+    <q-header
+      class="header-main"
+      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+    >
       <q-toolbar>
         <q-btn
-          v-if="menus?.length"
           round
           :size="$q.screen.gt.sm ? 'md' : 'sm'"
-          :aria-label="$t('label.menu')"
+          :aria-label="APP.title"
           icon="menu"
           @click="on_toggle_menu"
         >
@@ -46,7 +48,6 @@
     </q-header>
 
     <q-drawer
-      v-if="menus?.length"
       v-model="is_show_menu"
       bordered
       elevated
@@ -70,7 +71,16 @@
                   <q-icon :name="menu.icon" />
                 </q-item-section>
                 <q-item-section>
-                  {{ menu.title }}
+                  <div>
+                    {{ menu.title }}
+                    <q-badge
+                      v-if="true === menu.badge"
+                      color="orange"
+                      rounded
+                      align="top"
+                      transparent
+                    />
+                  </div>
                 </q-item-section>
               </template>
               <div v-for="child in menu.children" :key="child.id" class="drawer-child">
@@ -84,7 +94,16 @@
                       <q-icon :name="child.icon" />
                     </q-item-section>
                     <q-item-section>
-                      {{ child.title }}
+                      <div>
+                        {{ child.title }}
+                        <q-badge
+                          v-if="true === child.badge"
+                          color="orange"
+                          rounded
+                          align="top"
+                          transparent
+                        />
+                      </div>
                     </q-item-section>
                   </template>
                   <div v-for="grand in child.children" :key="grand.id">
@@ -96,7 +115,16 @@
                       <q-item-section
                         :class="active_menu.id === grand.id ? 'text-weight-bold' : ''"
                       >
-                        {{ grand.title }}
+                        <div>
+                          {{ grand.title }}
+                          <q-badge
+                            v-if="true === grand.badge"
+                            color="orange"
+                            rounded
+                            align="top"
+                            transparent
+                          />
+                        </div>
                       </q-item-section>
                     </q-item>
                   </div>
@@ -106,7 +134,16 @@
                     <q-icon :name="child.icon" />
                   </q-item-section>
                   <q-item-section :class="active_menu.id === child.id ? 'text-weight-bold' : ''">
-                    {{ child.title }}
+                    <div>
+                      {{ child.title }}
+                      <q-badge
+                        v-if="true === child.badge"
+                        color="orange"
+                        rounded
+                        align="top"
+                        transparent
+                      />
+                    </div>
                   </q-item-section>
                 </q-item>
               </div>
@@ -136,7 +173,16 @@
             <q-icon :name="active_menu.icon" />
           </q-item-section>
           <q-item-section>
-            {{ active_menu.title }}
+            <div>
+              {{ active_menu.title }}
+              <q-badge
+                v-if="true === active_menu.badge"
+                color="orange"
+                rounded
+                align="top"
+                transparent
+              />
+            </div>
           </q-item-section>
         </q-item>
         <router-view />
@@ -155,6 +201,7 @@ import { util } from 'src/scripts/util'
 import { api } from 'src/scripts/api'
 import { uix } from 'src/scripts/uix'
 import { storage } from 'src/scripts/storage'
+let self
 
 export default {
   setup() {
@@ -167,58 +214,51 @@ export default {
       is_logout_progress: ref(false),
       is_show_menu: ref(false),
       is_dark_mode: ref(false),
-      active_menu: ref({ id: null }),
+      active_menu: ref({ id: {} }),
       menus: ref([]),
     }
   },
   created() {
-    let self = this
+    self = this
     let auth = storage.auth()
     self.is_dark_mode = uix.dark.active()
     self.is_logged_in = util.isString(auth.token) && '' !== auth.token
     api.call({
       path: '/menus',
       onSuccess(menus) {
-        let menu = storage.menu()
-        self.active_menu = util.isObject(menu.active) ? menu.active : { id: null }
-        self.is_show_menu = true === menu.show
-        let exist = false
+        let smenu = storage.menu()
+        let sactive
+        let snext = util.isString(smenu.next) ? smenu.next : ''
         menus = util.isArray(menus) ? menus : []
         for (const menu of menus) {
-          if (!exist && self.active_menu.id === menu.id) {
-            exist = true
-          }
           if (menu.children?.length) {
             menu.icon = util.isString(menu.icon) && '' !== menu.icon ? menu.icon : 'dashboard'
             for (const child of menu.children) {
-              if (!exist && self.active_menu.id === child.id) {
-                exist = true
-              }
               if (child.children?.length) {
                 child.icon =
                   util.isString(child.icon) && '' !== child.icon ? child.icon : 'category'
                 for (const grand of child.children) {
-                  if (!exist && self.active_menu.id === grand.id) {
-                    exist = true
-                  }
                   grand.icon =
                     util.isString(grand.icon) && '' !== grand.icon ? grand.icon : 'stream'
+                  sactive = !sactive && snext === grand.link ? grand : sactive
                 }
               } else {
                 child.icon = util.isString(child.icon) && '' !== child.icon ? child.icon : 'blur_on'
+                sactive = !sactive && snext === child.link ? child : sactive
               }
             }
           } else {
             menu.icon = util.isString(menu.icon) && '' !== menu.icon ? menu.icon : 'extension'
+            sactive = !sactive && snext === menu.link ? menu : sactive
           }
           self.menus.push(menu)
           self.menus.push({ separator: true })
         }
-        if (!exist) {
-          delete menu.active
-          storage.menu(menu)
-          self.active_menu = { id: null }
-        }
+        self.active_menu = util.isObject(sactive) ? sactive : { id: {} }
+        self.is_show_menu = true === smenu.show
+        smenu.active = self.active_menu
+        delete smenu.next
+        storage.menu(smenu)
       },
     })
   },
@@ -227,7 +267,6 @@ export default {
      * TOGGLE MENU
      */
     on_toggle_menu: function () {
-      let self = this
       self.is_show_menu = !self.is_show_menu
       let menu = storage.menu()
       menu.show = self.is_show_menu
@@ -238,26 +277,24 @@ export default {
      * HEADER MENU
      */
     on_header_menu_click() {
-      let self = this
       self.active_menu = { id: {} }
       let cmenu = storage.menu()
       delete cmenu.active
       storage.menu(cmenu)
-      window.location.href = (util.webPath() !== '/' ? util.webPath() : '') + '/'
+      window.location.href = util.webPath() + '/'
     },
 
     /*
      * MENU CLICK
      */
     on_menu_click(menu) {
-      let self = this
       if (util.isString(menu.link) && '' !== menu.link) {
         if (menu.noPushRoute) {
           self.active_menu = { id: {} }
           let cmenu = storage.menu()
           delete cmenu.active
           storage.menu(cmenu)
-          window.location.href = (util.webPath() !== '/' ? util.webPath() : '') + menu.link
+          window.location.href = util.webPath() + menu.link
         } else {
           self.active_menu = menu
           let cmenu = storage.menu()
@@ -275,20 +312,26 @@ export default {
      * LOGOUT
      */
     on_logout_click() {
-      let self = this
       uix.confirm(function () {
         self.is_logout_progress = true
-        api.send({
-          path: '/logout',
-          method: 'post',
-          onFinish() {
-            self.is_logout_progress = false
-          },
-          onSuccess() {
-            storage.auth(null)
-            window.location.href = util.webPath()
-          },
-        })
+        let auth = storage.auth()
+        if (true === auth.persistent) {
+          storage.auth(null)
+          window.location.href = util.webPath()
+          self.is_logout_progress = false
+        } else {
+          api.send({
+            path: '/logout',
+            method: 'post',
+            onFinish() {
+              self.is_logout_progress = false
+            },
+            onSuccess() {
+              storage.auth(null)
+              window.location.href = util.webPath()
+            },
+          })
+        }
       }, 'confirm.logout')
     },
 

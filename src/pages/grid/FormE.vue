@@ -1,6 +1,10 @@
 <template>
-  <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;')">
-    <q-card-section class="q-pa-none header-main">
+  <q-card :style="'width: ' + ($q.screen.lt.md ? '100%;' : '50%;') + dialog.main.style">
+    <q-card-section
+      class="q-pa-none header-main"
+      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+      v-touch-pan.mouse="dialog.main.onDrag"
+    >
       <q-item class="q-pr-none">
         <q-item-section>
           <q-item-label class="text-h6 text-white">{{ title }}</q-item-label>
@@ -28,8 +32,11 @@
           class="col-md-6 col-sm-12 q-mb-xs"
           style="width: 100%"
         >
+          <div v-if="'title' === field.type" class="text-h6 text-center text-bold">
+            {{ field.label }}
+          </div>
           <q-input
-            v-if="'words' === field.type"
+            v-else-if="'words' === field.type"
             type="text"
             :label="field.label"
             :readonly="!field.editable"
@@ -85,7 +92,7 @@
                   transition-show="scale"
                   transition-hide="scale"
                   cover
-                  @before-show="on_before_show_calendar(field)"
+                  @before-show="uix.calendar.beforeShow(field, 'tab', 'proxy_value', 'value')"
                 >
                   <div class="bg-primary">
                     <q-tabs
@@ -217,7 +224,7 @@
     persistent
     transition-show="slide-down"
     transition-hide="none"
-    backdrop-filter="blur(2px)"
+    backdrop-filter="blur(1px)"
   >
     <Pick :parameters="dialog.pick.parameters" @close="on_close_dialog_pick" />
   </q-dialog>
@@ -225,9 +232,11 @@
 
 <script>
 import { ref, defineAsyncComponent } from 'vue'
+import { APP } from 'src/scripts/static'
 import { util } from 'src/scripts/util'
 import { uix } from 'src/scripts/uix'
 import { grid as fxGrid } from 'src/scripts/grid'
+let self
 
 export default {
   props: ['parameters'],
@@ -237,6 +246,8 @@ export default {
   },
   setup() {
     return {
+      APP,
+      uix,
       id: ref(null),
       title: ref(''),
       is_edit: ref(false),
@@ -251,20 +262,18 @@ export default {
       options: ref({}),
       row: ref(null),
       dialog: ref({
-        pick: {
-          show: false,
-          parameters: null,
-        },
+        main: uix.dialog.init(() => self.dialog.main),
+        pick: uix.dialog.init(),
       }),
     }
   },
 
   created() {
-    let self = this
+    self = this
     let params = fxGrid.get.object(self.parameters)
     let form = fxGrid.get.object(params.form)
     self.template = fxGrid.get.object(params.template)
-    self.replica = fxGrid.get.object(params.replica)
+    self.replica = params.replica
     self.relations = fxGrid.get.array(params.relations)
     self.enums = {}
     if (util.isObject(self.template.enums)) {
@@ -307,14 +316,14 @@ export default {
             field.text = field.format(field.value, params.row)
           }
         }
-        if (true === field.insertable || true === field.editable) {
+        if (true === field.insertable || true === field.editable || 'title' === field.type) {
           self.fields.push(field)
         }
       }
     } else {
       // add
       for (const element of fields) {
-        if (element.insertable) {
+        if (element.insertable || 'title' === element.type) {
           let field = fxGrid.clone.field(element)
           field.editable = true
           self.fields.push(field)
@@ -328,21 +337,17 @@ export default {
      * PICK CLICK
      */
     on_pick_select_click(field) {
-      let self = this
       let pick = self.template.picks[field.pick]
       if (!util.isObject(pick)) {
         uix.error('error.required', 'label.pick')
         return
       }
-      self.dialog.pick = {
-        show: true,
-        parameters: {
-          template: self.template,
-          field: field,
-          pick: pick,
-          replica: self.replica,
-        },
-      }
+      uix.dialog.show(self.dialog.pick, {
+        template: self.template,
+        field: field,
+        pick: pick,
+        replica: self.replica,
+      })
     },
 
     /*
@@ -357,21 +362,19 @@ export default {
      * CLOSE PICK DIALOG
      */
     on_close_dialog_pick(value) {
-      let self = this
       if (value?._pk_) {
         let field = self.dialog.pick.parameters.field
         let text = util.isFunction(field.format) ? field.format(value) : value + ''
         field.value = value
         field.text = text
       }
-      self.dialog.pick = { show: false, parameters: null, field: null }
+      uix.dialog.hide(self.dialog.pick)
     },
 
     /*
      * SAVE CLICK
      */
     on_save_click() {
-      let self = this
       self.form._grid_id_ = self.template._grid_id_
       fxGrid.action.save({
         id: self.id,
@@ -389,14 +392,6 @@ export default {
           })
         },
       })
-    },
-
-    /*
-     * CALENDAR
-     */
-    on_before_show_calendar(field) {
-      field.proxy_value = field.value
-      field.tab = 'time' === field.type ? 'time' : 'date'
     },
   },
 }

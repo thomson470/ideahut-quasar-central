@@ -165,6 +165,7 @@
 import { ref } from 'vue'
 import { util } from 'src/scripts/util'
 import { api } from 'src/scripts/api'
+let self
 
 export default {
   props: ['parameters'],
@@ -194,7 +195,7 @@ export default {
   },
 
   created() {
-    let self = this
+    self = this
     let params = util.isObject(self.parameters) ? self.parameters : {}
     self.project = util.isObject(params.project) ? params.project : {}
     self.get_modules()
@@ -204,7 +205,6 @@ export default {
      * GET MODULES
      */
     get_modules() {
-      let self = this
       self.loading = true
       api.call({
         path: '/modules',
@@ -249,7 +249,6 @@ export default {
      * UPDATE PAGE
      */
     on_update_page(value) {
-      let self = this
       self.page.value = value
       self.get_modules()
     },
@@ -258,7 +257,6 @@ export default {
      * SORT UPDATE
      */
     on_sort_update(value) {
-      let self = this
       self.order = value
       self.get_modules()
     },
@@ -267,7 +265,6 @@ export default {
      * OPEN PAGE
      */
     on_open_page(module) {
-      let self = this
       let url = new URL(window.location.href)
       let href =
         url.protocol +
