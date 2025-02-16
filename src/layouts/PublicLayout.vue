@@ -2,7 +2,10 @@
   <q-layout view="hHh lpR fFf" class="background-layout">
     <q-header
       class="header-main"
-      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+      :style="
+        (APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : '') +
+        (APP?.color?.title ? 'color: ' + APP.color.title + ' !important;' : '')
+      "
     >
       <q-toolbar>
         <q-btn

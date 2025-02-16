@@ -2,10 +2,14 @@
   <q-layout view="hHh lpR fFf" class="background-layout">
     <q-header
       class="header-main"
-      :style="APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : ''"
+      :style="
+        (APP?.color?.header ? 'background: ' + APP.color.header + ' !important;' : '') +
+        (APP?.color?.title ? 'color: ' + APP.color.title + ' !important;' : '')
+      "
     >
       <q-toolbar>
         <q-btn
+          v-if="menus?.length"
           round
           :size="$q.screen.gt.sm ? 'md' : 'sm'"
           :aria-label="APP.title"
@@ -48,6 +52,7 @@
     </q-header>
 
     <q-drawer
+      v-if="menus?.length"
       v-model="is_show_menu"
       bordered
       elevated
@@ -168,7 +173,7 @@
 
     <q-page-container>
       <q-page>
-        <q-item v-if="active_menu?.title" class="q-pa-sm q-pl-md q-pb-md text-h5">
+        <q-item v-if="active_menu?.title" class="q-pa-sm q-pl-md q-pb-sm text-h5">
           <q-item-section v-if="active_menu.icon" avatar style="min-width: 0px !important">
             <q-icon :name="active_menu.icon" />
           </q-item-section>

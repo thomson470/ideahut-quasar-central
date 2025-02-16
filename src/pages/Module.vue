@@ -17,14 +17,14 @@
         </q-btn>
         <q-card-section horizontal>
           <div v-if="project.icon && project.icon.startsWith('icon:')" class="col-3">
-            <q-icon :name="project.icon.substring(5)" size="200px" style="width: 100%"> </q-icon>
+            <q-icon :name="project.icon.substring(5)" size="200px" style="width: 100%; margin-top: 5px; margin-bottom: 5px;"> </q-icon>
           </div>
 
-          <q-img v-else class="col-3" :src="api.multimedia(project.icon)" height="200px" fit="fill">
+          <q-img v-else class="col-3" :src="api.multimedia(project.icon)" height="200px" fit="contain" style="margin-top: 5px; margin-bottom: 5px;">
             <template v-slot:error>
               <img
                 src="~/assets/noimage.png"
-                style="width: 100%; height: 200px; object-fit: contain"
+                style="width: 100%; height: 200px; margin-top: 5px; margin-bottom: 5px; object-fit: contain"
                 alt=""
               />
             </template>
@@ -48,7 +48,7 @@
       </q-card>
     </q-card-section>
     <q-card-section class="q-pa-xs">
-      <div class="row q-pa-sm justify-end">
+      <div class="row q-pa-none justify-end">
         <q-select
           v-model="order"
           :label="$t('label.sort')"
@@ -99,24 +99,25 @@
           </div>
         </div>
       </div>
-      <div v-else class="row q-pa-sm" style="max-height: 58vh; overflow-y: scroll">
-        <q-card
+      <div v-else class="row q-pa-xs" style="max-height: 58vh; overflow-y: scroll">
+        <div
           v-for="(module, index) in modules"
           :key="index"
-          class="col-lg-3 col-md-4 col-sm-6 col-xs-12 q-pa-xs q-mb-md"
+          class="col-lg-3 col-md-4 col-sm-6 col-xs-12 q-pa-sm q-pt-none q-mt-none"
         >
+        <q-card style="height: 100%;">
           <q-icon
             v-if="module.icon && module.icon.startsWith('icon:')"
             :name="module.icon.substring(5)"
             size="160px"
-            style="width: 100%"
+            style="width: 100%; margin-top: 5px;"
           >
           </q-icon>
-          <q-img v-else :src="api.multimedia(module.icon)" height="160px" fit="fill">
+          <q-img v-else :src="api.multimedia(module.icon)" height="160px" fit="contain" style="margin-top: 5px;">
             <template v-slot:error>
               <img
                 src="~/assets/noimage.png"
-                style="width: 100%; height: 160px; object-fit: contain"
+                style="width: 100%; height: 160px; margin-top: 5px; object-fit: contain"
                 alt=""
               />
             </template>
@@ -155,7 +156,8 @@
               {{ module.description }}
             </div>
           </q-card-section>
-        </q-card>
+          </q-card>
+        </div>
       </div>
     </q-card-section>
   </q-card>

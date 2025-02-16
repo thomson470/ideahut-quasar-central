@@ -34,7 +34,7 @@
             flat
             bordered
             @added="(files) => (image.file = files[0])"
-            @removed="(files) => (image.file = null)"
+            @removed="(files) => on_image_remove()"
           >
             <template v-slot:header="scope">
               <div class="row no-wrap items-center q-pr-sm q-gutter-xs">
@@ -511,6 +511,15 @@ export default {
           image.path = data
         },
       })
+    },
+
+    /*
+     * IMAGE UPLOAD
+     */
+    on_image_remove() {
+      self.image.file = null
+      self.image.path = null
+      self.image.type = null
     },
 
     /*

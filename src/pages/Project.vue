@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div>
-    <div class="row q-pa-sm justify-end">
+    <div class="row q-pa-none q-pt-sm justify-end">
       <q-select
         v-model="order"
         :label="$t('label.sort')"
@@ -52,62 +52,64 @@
         </div>
       </div>
     </div>
-    <div v-else class="row q-pa-sm">
-      <q-card
+    <div v-else class="row q-pa-xs">
+      <div
         v-for="(project, index) in projects"
         :key="index"
-        class="col-lg-3 col-md-4 col-sm-6 col-xs-12 q-pa-xs q-mb-md"
+        class="col-lg-3 col-md-4 col-sm-6 col-xs-12 q-pa-sm q-pt-none q-mt-none q-mb-xs"
       >
-        <q-icon
-          v-if="project.icon && project.icon.startsWith('icon:')"
-          :name="project.icon.substring(5)"
-          size="200px"
-          style="width: 100%"
-        >
-        </q-icon>
-        <q-img v-else :src="api.multimedia(project.icon)" height="200px" fit="fill">
-          <template v-slot:error>
-            <img
-              src="~/assets/noimage.png"
-              style="width: 100%; height: 200px; object-fit: contain"
-              alt=""
-            />
-          </template>
-        </q-img>
-
-        <q-card-section>
-          <q-btn
-            fab
-            glossy
-            color="teal"
-            icon="hub"
-            class="absolute"
-            style="top: 0; right: 12px; transform: translateY(-50%)"
-            @click="on_dialog_module(project)"
-          />
-          <div class="row no-wrap items-center">
-            <div class="col text-caption q-pt-md">
-              <q-icon
-                name="radio_button_checked"
-                :color="'Y' === project.isActive ? 'positive' : 'negative'"
+        <q-card style="height: 100%;">
+          <q-icon
+            v-if="project.icon && project.icon.startsWith('icon:')"
+            :name="project.icon.substring(5)"
+            size="200px"
+            style="width: 100%; margin-top: 5px;"
+          >
+          </q-icon>
+          <q-img v-else :src="api.multimedia(project.icon)" height="200px" fit="contain" style="margin-top: 5px;">
+            <template v-slot:error>
+              <img
+                src="~/assets/noimage.png"
+                style="width: 100%; height: 200px; margin-top: 5px; object-fit: contain"
+                alt=""
               />
-              {{ 'Y' === project.isActive ? $t('label.active') : $t('label.inactive') }}
-            </div>
-            <div class="col-auto text-grey text-caption q-pt-md row no-wrap items-center">
-              {{ $t('label.module') }} ({{ project.modules }})
-            </div>
-          </div>
-        </q-card-section>
+            </template>
+          </q-img>
 
-        <q-card-section class="q-pt-none">
-          <div class="text-subtitle1">
-            {{ project.name }}
-          </div>
-          <div class="text-caption text-grey ellipsis-text lines4">
-            {{ project.description }}
-          </div>
-        </q-card-section>
-      </q-card>
+          <q-card-section>
+            <q-btn
+              fab
+              glossy
+              color="teal"
+              icon="hub"
+              class="absolute"
+              style="top: 0; right: 12px; transform: translateY(-50%)"
+              @click="on_dialog_module(project)"
+            />
+            <div class="row no-wrap items-center">
+              <div class="col text-caption q-pt-md">
+                <q-icon
+                  name="radio_button_checked"
+                  :color="'Y' === project.isActive ? 'positive' : 'negative'"
+                />
+                {{ 'Y' === project.isActive ? $t('label.active') : $t('label.inactive') }}
+              </div>
+              <div class="col-auto text-grey text-caption q-pt-md row no-wrap items-center">
+                {{ $t('label.module') }} ({{ project.modules }})
+              </div>
+            </div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            <div class="text-subtitle1">
+              {{ project.name }}
+            </div>
+            <div class="text-caption text-grey ellipsis-text lines4">
+              {{ project.description }}
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
     </div>
   </div>
   <q-dialog
