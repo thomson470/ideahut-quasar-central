@@ -98,7 +98,7 @@ const util = {
    * CALL IF
    */
   callIf(isTrue, fxTrue, fxFalse) {
-    if (true === isTrue) {
+    if (isTrue) {
       if (util.isFunction(fxTrue)) {
         return fxTrue()
       }
@@ -112,7 +112,7 @@ const util = {
    * RUN IF
    */
   runIf(isTrue, fxTrue, fxFalse) {
-    if (true === isTrue) {
+    if (isTrue) {
       if (util.isFunction(fxTrue)) {
         fxTrue()
       }

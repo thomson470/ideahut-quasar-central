@@ -30,6 +30,7 @@ export default {
     self = this
     let projectId = self.$route.query.projectId
     let moduleId = self.$route.query.moduleId
+
     api.call({
       path: '/redirect',
       method: 'post',
@@ -40,18 +41,31 @@ export default {
       onSuccess(data) {
         data = util.isObject(data) ? data : {}
         if (util.isString(data.action) && '' !== data.action) {
+          util.runIf(
+            util.isArray(data.cookies) && data?.cookies?.length,
+            () => {
+              let thecookie = ""
+              for (const cookie of data.cookies) {
+                thecookie += cookie.name + "=" + cookie.value + "; "
+              }
+              util.runIf(thecookie?.length, () => document.cookie = thecookie)
+            }
+          )
           let f = document.createElement('form')
           f.setAttribute('method', util.isString(data.method) ? data.method : 'get')
           f.setAttribute('action', data.action)
-          if (util.isObject(data.parameters)) {
-            Object.keys(data.parameters).forEach((name) => {
-              let i = document.createElement('input')
-              i.setAttribute('type', 'hidden')
-              i.setAttribute('name', name)
-              i.setAttribute('value', data.parameters[name])
-              f.appendChild(i)
-            })
-          }
+          util.runIf(
+            util.isObject(data.parameters),
+            () => {
+              Object.keys(data.parameters).forEach((name) => {
+                let i = document.createElement('input')
+                i.setAttribute('type', 'hidden')
+                i.setAttribute('name', name)
+                i.setAttribute('value', data.parameters[name])
+                f.appendChild(i)
+              })
+            }
+          )
           document.getElementsByTagName('body')[0].appendChild(f)
           f.submit()
         } else {
